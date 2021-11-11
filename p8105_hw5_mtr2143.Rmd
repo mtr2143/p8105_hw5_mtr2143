@@ -18,3 +18,4 @@ wapo_csv_url <- "https://raw.githubusercontent.com/washingtonpost/data-homicides
 homicides <- read_csv(wapo_csv_url)
 ```
 
+The raw data from The Washington Post contains `r nrow(homicides)` observations and `r ncol(homicides)` columns where each observation represents a homicide from the last decade in the 50 largest American cities. Each observation includes demographic information pertaining to the victim (name [`victim_last`, `victim_first`], race [`victim_race`], age at time of death [`victim_age`], and sex [`victim sex`]) along with the coordinates of the murder (`lat`, `lon`) and whether an arrest was made (`disposition`). 
