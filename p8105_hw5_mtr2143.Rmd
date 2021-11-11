@@ -7,6 +7,7 @@ output: github_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(rvest)
+library(lubridate)
 ```
 
 # Problem 1
@@ -19,3 +20,53 @@ homicides <- read_csv(wapo_csv_url)
 ```
 
 The raw data from The Washington Post contains `r nrow(homicides)` observations and `r ncol(homicides)` columns where each observation represents a homicide from the last decade in the 50 largest American cities. Each observation includes demographic information pertaining to the victim (name [`victim_last`, `victim_first`], race [`victim_race`], age at time of death [`victim_age`], and sex [`victim sex`]) along with the coordinates of the murder (`lat`, `lon`) and whether an arrest was made (`disposition`). 
+
+###### Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
+
+```{r, add city-state column, message=FALSE}
+homicides <-
+  homicides %>% 
+    mutate(
+      city_state = str_c(city, ", ", state), 
+      reported_date = as.character(reported_date) %>% 
+        as_date(format = "%Y%m%d")
+    ) %>% 
+    relocate(
+      city_state, .after = state
+    )
+
+homicides_per_city <-
+  homicides %>% 
+    mutate(
+      case = ifelse(disposition %in% c("Closed without arrest", "Open/No arrest"), "unsolved", "solved")
+    ) %>% 
+    group_by(city_state, case) %>% 
+    summarize(
+      homicide_count = n()
+    )
+
+homicides_per_city_total <- 
+    homicides_per_city %>% 
+    group_by(city_state) %>% 
+    summarize(
+      homicide_count = sum(homicide_count)
+    ) %>% 
+    mutate(
+      case = "total"
+    ) %>% 
+    relocate(case, .after = city_state)
+
+homicides_per_city <-
+  bind_rows(homicides_per_city, homicides_per_city_total) %>% 
+  mutate(
+    case = factor(case, levels = c("solved", "unsolved", "total"))
+  ) %>% 
+  arrange(city_state, case) %>% 
+  filter(case != "solved") %>% 
+  pivot_wider(
+    names_from = "case", 
+    values_from = "homicide_count"
+  ) 
+```
+
+
