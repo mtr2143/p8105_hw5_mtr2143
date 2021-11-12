@@ -172,6 +172,7 @@ long_data <-
 long_data %>% 
   ggplot(aes(x = week, y = value, group = interaction(tx_arm, subject_id), color = tx_arm)) +
   geom_line() +
+  geom_smooth(aes(group = tx_arm)) +
   facet_grid(. ~ tx_arm) +
   xlab("Week") + ylab("Value") +
   theme(
