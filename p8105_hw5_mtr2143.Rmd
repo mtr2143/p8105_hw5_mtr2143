@@ -8,6 +8,14 @@ output: github_document
 library(tidyverse)
 library(rvest)
 library(lubridate)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
 ```
 
 # Problem 1
@@ -105,5 +113,21 @@ prop_ci_city <-
     select(!(data)) %>% 
     unnest(cols = prop_95_CI) %>% 
     rename(lower_limit_95 = conf.low, upper_limit_95 = conf.high)
+```
+
+Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+
+```{r, plot geom_errorbar, fig.dim = c(8, 6), message=FALSE}
+prop_ci_city %>% 
+  ggplot(aes(x = fct_reorder(city_state, estimate), y = estimate, color = city_state)) +
+  geom_point(aes(color = city_state)) +
+  geom_errorbar(aes(ymin = lower_limit_95, ymax = upper_limit_95), width = 0.5) +
+  coord_flip() +
+  ylab("Estimate") +
+  xlab("Location") +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_text(size = 8.5)
+    )
 ```
 
