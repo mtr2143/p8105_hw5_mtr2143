@@ -27,6 +27,7 @@ The raw data from The Washington Post contains `r nrow(homicides)` observations 
 homicides <-
   homicides %>% 
     mutate(
+      state = ifelse(city == "Tulsa", "OK", state), 
       city_state = str_c(city, ", ", state), 
       reported_date = as.character(reported_date) %>% 
         as_date(format = "%Y%m%d")
@@ -78,7 +79,31 @@ baltimore_prop_tbl <-
 
 baltimore_prop <-
   prop.test(pull(baltimore_prop_tbl, unsolved), pull(baltimore_prop_tbl, total)) %>% 
-  broom::tidy()
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
 ```
 
 The estimated proportion of unsolved homicides in the last decade from Baltimore, MD is `r pull(baltimore_prop, estimate)` with a 95% confidence interval of (`r pull(baltimore_prop, conf.low)`, `r pull(baltimore_prop, conf.high)`).
+
+###### Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.
+
+```{r, prop test for all cities, message=FALSE}
+all_cities_test <- function(df) {
+  prop.test(x = pull(df, unsolved), n = pull(df, total)) %>% 
+    broom::tidy() %>% 
+    select(estimate, conf.low, conf.high)
+}
+
+homicides_nest <-
+  nest(homicides_per_city, data = unsolved:total)
+
+prop_ci_city <-
+  homicides_nest %>% 
+    mutate(
+      prop_95_CI = map(data, all_cities_test)
+    ) %>% 
+    select(!(data)) %>% 
+    unnest(cols = prop_95_CI) %>% 
+    rename(lower_limit_95 = conf.low, upper_limit_95 = conf.high)
+```
+
