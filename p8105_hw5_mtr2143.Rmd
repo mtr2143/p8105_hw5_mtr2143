@@ -179,3 +179,4 @@ long_data %>%
   )
 ```
 
+We notice that there is a positive linear trend over time in the experimental arm that is absent from the control arm. These is nearly no observable trend in the control arm. The maximum value in the control arm is observed at week 5, while the maximum value in the experimental arm is observed at week 7. 
