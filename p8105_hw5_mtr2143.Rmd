@@ -8,6 +8,7 @@ output: github_document
 library(tidyverse)
 library(rvest)
 library(lubridate)
+library(knitr)
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 options(
@@ -20,22 +21,25 @@ scale_fill_discrete = scale_fill_viridis_d
 
 # Problem 1
 
+###### Read in data  
+
 ```{r, load wapo data, message=FALSE, warning=FALSE}
 
 wapo_csv_url <- "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
 
-homicides <- read_csv(wapo_csv_url)
+homicides_data <- read_csv(wapo_csv_url)
 ```
 
-The raw data from The Washington Post contains `r nrow(homicides)` observations and `r ncol(homicides)` columns where each observation represents a homicide from the last decade in the 50 largest American cities. Each observation includes demographic information pertaining to the victim (name [`victim_last`, `victim_first`], race [`victim_race`], age at time of death [`victim_age`], and sex [`victim sex`]) along with the coordinates of the murder (`lat`, `lon`) and whether an arrest was made (`disposition`). 
+The raw data from The Washington Post contains `r nrow(homicides_data)` observations and `r ncol(homicides_data)` columns where each observation represents a homicide from the last decade in the 50 largest American cities. Each observation includes demographic information pertaining to the victim (name [`victim_last`, `victim_first`], race [`victim_race`], age at time of death [`victim_age`], and sex [`victim sex`]) along with the coordinates of the murder (`lat`, `lon`) and whether an arrest was made (`disposition`). 
 
-###### Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
+###### Create a city_state variable and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides
 
 ```{r, add city-state column, message=FALSE}
 homicides <-
-  homicides %>% 
+  homicides_data %>% 
     mutate(
-      state = ifelse(city == "Tulsa", "OK", state), 
+      state = ifelse(city == "Tulsa", "OK", state) %>% 
+        str_to_upper(), 
       city_state = str_c(city, ", ", state), 
       reported_date = as.character(reported_date) %>% 
         as_date(format = "%Y%m%d")
@@ -76,9 +80,14 @@ homicides_per_city <-
     names_from = "case", 
     values_from = "homicide_count"
   ) 
+
+homicides_per_city %>% 
+  kable(caption = "Number of Unsolved and Total Homicides per 50 Most Populous Cities, 2007-2017")
 ```
 
-###### For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+When running this data, I noticed there was an observation with a `uid` corresponding to Tulsa and `city == "Tulsa"` but `state == "AL"`, so I updated this observation so that `state == "OK"`. I also noticed a slight inconsistency in casing of `state`, so I converted it all upper case. 
+
+###### For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved.
 
 ```{r Baltimore prop test, message=FALSE}
 baltimore_prop_tbl <-
@@ -93,7 +102,7 @@ baltimore_prop <-
 
 The estimated proportion of unsolved homicides in the last decade from Baltimore, MD is `r pull(baltimore_prop, estimate)` with a 95% confidence interval of (`r pull(baltimore_prop, conf.low)`, `r pull(baltimore_prop, conf.high)`).
 
-###### Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.
+###### Run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. 
 
 ```{r, prop test for all cities, message=FALSE}
 all_cities_test <- function(df) {
@@ -113,9 +122,12 @@ prop_ci_city <-
     select(!(data)) %>% 
     unnest(cols = prop_95_CI) %>% 
     rename(lower_limit_95 = conf.low, upper_limit_95 = conf.high)
+
+prop_ci_city %>% 
+  kable(caption = "Estimated Proportion & 95% CI of Unsolved Homicides in 50 Most Populated American Cities, 2007-2017")
 ```
 
-Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+###### Plot of Unsolved Homicides
 
 ```{r, plot geom_errorbar, fig.dim = c(8, 6), message=FALSE}
 prop_ci_city %>% 
