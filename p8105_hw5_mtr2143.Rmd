@@ -197,14 +197,9 @@ We notice that there is a positive linear trend over time in the experimental ar
 
 # Problem 3
 
-There are two cases to address:
+###### Write a function that takes a vector as an argument; replaces missing numeric values with the mean of the column and replaces character values with 'virginica'; and returns the resulting vector. 
 
-For numeric variables, you should fill in missing values with the mean of non-missing values
-For character variables, you should fill in missing values with "virginica"
-
-Write a function that takes a vector as an argument; replaces missing values using the rules defined above; and returns the resulting vector. Apply this function to the columns of iris_with_missing using a map statement.
-
-```{r, load iris}
+```{r, load iris, message=FALSE}
 set.seed(10)
 
 iris_with_missing <- iris %>% 
