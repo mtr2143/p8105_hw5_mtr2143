@@ -223,3 +223,8 @@ iris_no_missing <-
   map_df(replace_missing_iris)
 ```
 
+```{r}
+map_df(.x = iris_with_missing, ~sum(is.na(.x)))
+map_df(.x = iris_no_missing, ~sum(is.na(.x)))
+```
+
