@@ -219,7 +219,7 @@ replace_missing_iris <- function(vec) {
 }
 
 iris_no_missing <- 
-  as.list(iris_with_missing) %>% 
+  iris_with_missing %>% 
   map_df(replace_missing_iris)
 ```
 
